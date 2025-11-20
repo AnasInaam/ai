@@ -1,0 +1,70 @@
+✅ Program 1 (Facts only)
+Code (correct):
+likes(ram, mango).
+girl(seema).
+like(bill, candy).
+real(rose).
+own(john, gold).
+
+run : 
+
+?- likes(ram, What).
+?- girl(seema).
+?- own(john, gold).
+
+
+Explain: 
+
+Explanation (medium length)
+
+This program only contains facts, which describe simple relationships:
+
+likes(ram, mango). → Ram likes mango.
+
+girl(seema). → Seema is a girl.
+
+like(bill, candy). → Bill likes candy.
+
+real(rose). → Rose is real.
+
+own(john, gold). → John owns gold.
+
+There is no logic or rules, only stored information. When you query Prolog, it checks whether the fact exists and returns true or false, or fills variables you ask for.
+
+
+
+
+✅ Program 2 (Temperature conversion)
+Code (correct):
+c_to_f(C, F) :- F is (C * 9 / 5) + 32.
+freezing(F) :- F =< 32.
+
+
+Run sample queries:
+
+?- c_to_f(0, F).
+F = 32.
+
+?- c_to_f(25, F).
+F = 77.
+
+?- freezing(30).
+true.
+
+?- freezing(50).
+false.
+
+
+Explanation (medium)
+
+This program defines two simple rules:
+
+c_to_f(C,F) converts Celsius to Fahrenheit using the formula
+F = (C × 9/5) + 32
+
+freezing(F) is true if the Fahrenheit temperature is 32°F or below, meaning freezing point of water.
+
+Prolog computes numeric expressions using is, and comparisons like =< allow checking conditions.
+
+This small program demonstrates how Prolog can perform calculations and simple logical checks.
+
