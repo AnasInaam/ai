@@ -1,0 +1,92 @@
+Code:
+ /* -------- Robot Traversal via Means Ends Analysis (MEA) -------- 
+   Strategy: From current state, try successors sorted by smallest heuristic (Manhattan distance) 
+   Avoid revisiting states and obstacles; backtrack if stuck. ------------------------------------------------------------------ */ 
+ 
+%% Entry point 
+% solve_mea(+StartXY, +GoalXY, +ObstaclesList, +BoundsXY, -Path) 
+solve_mea((SX,SY), (GX,GY), Obst, (MaxX,MaxY), Path) :- 
+    Start = pos(SX,SY), 
+    Goal  = pos(GX,GY), 
+    mea(Start, Goal, Obst, (MaxX,MaxY), [Start], RevPath), 
+    reverse(RevPath, Path). 
+ 
+%% Goal reached 
+mea(Goal, Goal, _Obst, _Bds, Visited, Visited) :- !. 
+ 
+%% Expand current state using MEA ordering (best-first by heuristic) 
+mea(Current, Goal, Obst, Bds, Visited, PathOut) :- 
+    Current = pos(X,Y), 
+    % Generate valid successors not yet visited 
+    findall(Succ, 
+            ( neighbor(pos(X,Y), Bds, Obst, Succ), 
+              \+ member(Succ, Visited) 
+            ), 
+            Succs), 
+    Succs \= [],  % fail if no successors 
+    % Score successors by heuristic 
+    score_successors(Succs, Goal, Scored),
+
+  keysort(Scored, Sorted),           % ascending order by heuristic 
+    pairs_values(Sorted, OrderedSuccs),% get ordered successors 
+    % Try each successor in MEA order (backtrack if needed) 
+    try_successors(OrderedSuccs, Goal, Obst, Bds, Visited, PathOut). 
+ 
+%% Try successors in order 
+try_successors([S|_], Goal, Obst, Bds, Vis, PathOut) :- 
+    mea(S, Goal, Obst, Bds, [S|Vis], PathOut). 
+try_successors([_|Ss], Goal, Obst, Bds, Vis, PathOut) :- 
+    try_successors(Ss, Goal, Obst, Bds, Vis, PathOut). 
+try_successors([], _Goal, _Obst, _Bds, _Vis, _PathOut) :- fail. 
+ 
+%% Generate 4-connected neighbors (N,S,E,W) within bounds and not obstacles 
+neighbor(pos(X,Y), (MaxX,MaxY), Obst, pos(X, Y1)) :- 
+    (Y1 is Y+1 ; Y1 is Y-1), 
+    within(1, MaxY, Y1), 
+    \+ blocked((X,Y1), Obst). 
+neighbor(pos(X,Y), (MaxX,MaxY), Obst, pos(X1, Y)) :- 
+    (X1 is X+1 ; X1 is X-1), 
+    within(1, MaxX, X1), 
+    \+ blocked((X1,Y), Obst). 
+ 
+%% Utility checks 
+within(Low, High, V) :- V >= Low, V =< High. 
+blocked((X,Y), Obst) :- member((X,Y), Obst). 
+ 
+%% Heuristic: Manhattan distance 
+h(pos(X,Y), pos(GX,GY), H) :- 
+    DX is abs(X-GX), 
+    DY is abs(Y-GY), 
+    H is DX + DY. 
+ 
+%% Score successors by heuristic 
+score_successors([], _Goal, []). 
+score_successors([S|Ss], Goal, [H-S|Rest]) :- 
+    h(S, Goal, H), 
+    score_successors(Ss, Goal, Rest). 
+ 
+%% Extract values from Key-Value pairs 
+pairs_values([], []). 
+pairs_values([_-V|T], [V|Vs]) :- pairs_values(T, Vs).
+
+
+run : 
+?- solve_mea((1,1), (5,5), [(3,3),(2,4)], (5,5), Path).
+
+
+Explain: 
+What it does (one-paragraph)
+It finds a path for a robot from a start cell (SX,SY) to a goal cell (GX,GY) on a 2D grid with given bounds and obstacles, using a Means–Ends / best-first ordering: at each step it generates the unvisited 4-connected neighbors (N,S,E,W), scores them by Manhattan distance to the goal, tries them in increasing score (closest first), and backtracks if a chosen branch fails. The result Path is a list of pos(X,Y) positions from start to goal.
+
+Key points (very short)
+Entry predicate: solve_mea((SX,SY),(GX,GY),Obstacles,(MaxX,MaxY), Path).
+Neighbors: four directions, inside bounds, not in Obstacles.
+Heuristic: Manhattan distance h(pos(X,Y),pos(GX,GY),H).
+Ordering: successors sorted by H (small → tried first) using keysort/2.
+Search style: depth-first recursion but tries successors in heuristic order — so it’s heuristic-guided backtracking (not a full frontier-based best-first).
+Avoids cycles: checks \+ member(Succ,Visited) so it won’t revisit visited states.
+
+Success / failure
+Succeeds and returns Path when goal reached.
+
+Fails if there is no path (e.g., goal blocked or fully enclosed).
