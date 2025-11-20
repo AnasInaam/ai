@@ -1,0 +1,75 @@
+Code :
+
+/* -------- Traveling Salesman Problem in Prolog -------- 
+   Approach: Generate all possible tours (permutations), 
+   calculate their cost, and select the minimal one. -------------------------------------------------------- */
+:- use_module(library(clpfd)).  % for min_list/2, etc.
+/* ----- Distance facts ----- */
+dist(a, b, 10).
+dist(a, c, 15).
+dist(a, d, 20).
+dist(b, c, 35).
+dist(b, d, 25).
+dist(c, d, 30).
+/* ----- Make distance symmetric ----- */
+distance(X, Y, D) :-
+    dist(X, Y, D);
+    dist(Y, X, D).
+
+/* ----- Compute cost of a given tour ----- */
+tour_cost([_], 0).
+tour_cost([C1, C2 | Rest], Cost) :-
+    distance(C1, C2, D),
+    tour_cost([C2 | Rest], SubCost),
+    Cost is D + SubCost.
+/* ----- Solve TSP from a Start City ----- */
+tsp(Start, BestPath, MinCost) :-
+    % Get all unique cities
+    findall(C, (dist(C, _, _) ; dist(_, C, _)), CitiesDup),
+    sort(CitiesDup, Cities),
+    % Exclude the starting city
+    delete(Cities, Start, OtherCities),
+    % Generate all permutations of other cities
+    findall(Path, permutation(OtherCities, Path), PermPaths),
+    % Add Start at beginning and end of each path
+    findall([Start | PWithEnd],
+            (member(P, PermPaths),
+             append(P, [Start], PWithEnd)),
+            AllTours),
+    % Calculate cost for each tour
+    findall(Cost-Path,
+            (member(Path, AllTours),
+             tour_cost(Path, Cost)),
+            CostedTours),
+    % Sort by cost and choose the best one
+    keysort(CostedTours, [MinCost-BestPath | _]).
+
+Run: 
+
+?- tsp(a, BestPath, MinCost).
+
+
+
+Explain: 
+
+Medium-length explanation (what the code does and how)
+
+Goal & approach: This is a brute-force solver for the Traveling Salesman Problem (TSP). It generates every possible tour that starts and ends at a chosen Start city, computes each tour’s total distance, and selects the tour with the smallest total distance.
+
+Distance facts & symmetry: Pairwise distances are declared with dist/3 (e.g. dist(a,b,10)). The distance/3 predicate makes the distances symmetric so distance(X,Y,D) succeeds whether dist(X,Y,D) or dist(Y,X,D) is recorded.
+
+Cities and permutations: tsp/3 collects all city symbols from the dist/3 facts, removes duplicates and sorts them. It deletes the chosen Start city from this list, then generates all permutations of the remaining cities. Each permutation represents a candidate visiting order for the other cities.
+
+Forming tours: For each permutation P of the non-start cities, the code builds a full tour [Start | PWithEnd] where PWithEnd is P with Start appended at the end — so every tour is a cycle starting and ending at Start, e.g. [a,b,c,d,a].
+
+Cost calculation: tour_cost/2 recursively sums the pairwise distance/3 values along the tour list. Note the base case tour_cost([_], 0) assumes you stop when one element remains (the last Start return), so the recursion sums adjacent legs.
+
+Choose best tour: It pairs each tour with its cost as Cost-Path, collects them into CostedTours, uses keysort/2 to sort by cost (ascending), and then extracts the first element as the minimal cost MinCost with corresponding BestPath.
+
+Complexity & caveats: This method is simple but exponential: generating permutations yields factorial time and memory (O(n!)) and is only practical for small numbers of cities (typically ≤10). It guarantees an optimal solution (because it checks all tours), but it’s not scalable. Also:
+
+Ensure Start is one of the cities present in the dist/3 facts.
+
+use_module(library(clpfd)) is included but not strictly required for this code — it’s commonly used for constraint problems and utilities; removing it won’t affect the current logic.
+
+BestPath returned includes Start at both beginning and end (explicit tour cycle).
