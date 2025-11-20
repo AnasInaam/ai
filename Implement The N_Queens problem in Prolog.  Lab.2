@@ -1,0 +1,35 @@
+Code: 
+
+queens(N, Qs):- range(1, N, Us) , queens(Us , [] , Qs).
+queens([] , Qs , Qs).
+queens(Us , Ps , Qs ):- select(Q , Us , Us1), \+ attack( Q , Ps),
+    queens(Us1 , [Q |Ps] ,Qs).
+range(J ,J ,[J]).
+range(I , J , [I|Ns]):- I < J, I1 is I+1 , range(I1 ,J ,Ns).
+attack(Q , Qs ):- attack(Q ,1 , Qs).
+attack(X, N ,[Y| _]):- X is Y + N.
+attack(X, N ,[Y|_]):- X is Y - N.
+attack(X, N ,[_|Ys]):- 
+    N1 is N+1 ,attack(X , N1 , Ys ).
+go:- queens(8 , Qs) , write(Qs).
+
+
+Run: 
+
+?- [queens].
+
+?- queens(8, Qs).
+
+Explain:
+
+This is a backtracking solution to the N-Queens problem.
+Goal: place N queens on an N×N chessboard so that no two queens attack each other (not in same row, not in same diagonal).
+
+1. queens(N, Qs)
+
+This creates a list of column numbers 1..N using range/3.
+Us = the list of available columns.
+Ps = list of already placed queens.
+
+Example: for N = 8
+Us = [1,2,3,4,5,6,7,8]
