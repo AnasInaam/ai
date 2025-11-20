@@ -1,0 +1,94 @@
+Code : 
+
+% --------------------------------------- 
+% Undirected graph (subset of Romania map) 
+% --------------------------------------- 
+edge(arad, sibiu, 140). 
+edge(sibiu, fagaras, 99). 
+edge(sibiu, rimnicu, 80). 
+edge(fagaras, bucharest, 211). 
+edge(rimnicu, pitesti, 97). 
+edge(pitesti, bucharest, 101). 
+ 
+% Make edges undirected 
+adj(X, Y) :- edge(X, Y, _). 
+adj(X, Y) :- edge(Y, X, _). 
+ 
+% --------------------------------------- 
+% Heuristic: straight-line distance to Bucharest (example values) 
+% (Only relative ranking matters for greedy best-first) 
+% --------------------------------------- 
+heuristic(arad, 366). 
+heuristic(sibiu, 253). 
+heuristic(fagaras, 176). 
+heuristic(rimnicu, 193). 
+heuristic(pitesti, 100). 
+heuristic(bucharest, 0). 
+ 
+% ---------------------------------------
+
+% Public API 
+% --------------------------------------- 
+% best_first(+Start, +Goal, -Path) 
+best_first(Start, Goal, Path) :- 
+    heuristic(Start, H0), 
+    gbfs([H0-[Start]], Goal, RevPath, false), 
+    reverse(RevPath, Path). 
+ 
+% best_first_debug(+Start, +Goal, -Path) 
+%   Same as best_first/3, but prints expansions and frontier at each step. 
+best_first_debug(Start, Goal, Path) :- 
+    heuristic(Start, H0), 
+    gbfs([H0-[Start]], Goal, RevPath, true), 
+    reverse(RevPath, Path). 
+ 
+% --------------------------------------- 
+% Greedy Best-First core 
+% Open list is a list of H-Path pairs, kept sorted by H (ascending) 
+% --------------------------------------- 
+gbfs([_H-[Goal|Rest] | _], Goal, [Goal|Rest], _Debug) :- !. 
+gbfs([H-[Current|RestPath] | Open], Goal, Path, Debug) :- 
+    ( Debug == true -> 
+        format('Expanding: ~w~n', [Current]), 
+        print_frontier([H-[Current|RestPath] | Open]) 
+    ;   true 
+    ), 
+    findall(H1-[Next,Current|RestPath], 
+            ( adj(Current, Next), 
+              \+ member(Next, [Current|RestPath]),   % avoid cycles 
+              heuristic(Next, H1) 
+            ), 
+            Children), 
+    append(Open, Children, Open1), 
+    keysort(Open1, OpenSorted),  % sort by heuristic key 
+    gbfs(OpenSorted, Goal, Path, Debug). 
+ 
+print_frontier(Frontier) :- 
+    findall((H,Head), 
+            ( member(H-[Head|_], Frontier) ), 
+            Pairs), 
+    format('Frontier (H,Node): ~w~n~n', [Pairs]).
+
+
+
+
+Run : 
+
+?- best_first(arad, bucharest, Path).
+Path = [arad, sibiu, fagaras, bucharest].
+
+
+What this code does (very short): 
+
+✔ It creates a map (cities connected by roads).
+✔ It defines a heuristic (how far each city is from Bucharest).
+✔ It implements Greedy Best-First Search (GBFS) → a search algorithm.
+✔ GBFS always chooses the city that looks closest to the goal using the heuristic.
+✔ It returns a path from Start → Goal.
+How it works (simple)
+edge/3 = roads between cities
+adj/2 = makes the roads undirected
+heuristic/2 = "straight line" distance to Bucharest
+best_first(Start,Goal,Path) = runs the greedy search
+best_first_debug/3 = same, but prints steps
+gbfs = core search logic
