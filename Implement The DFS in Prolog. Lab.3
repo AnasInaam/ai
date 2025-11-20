@@ -1,0 +1,72 @@
+code : 
+
+dfs(Start , Goal , Path):-
+    dfs_helper(Start , Goal , [Start] , Path).
+dfs_helper(Goal , Goal , Path , Path).
+dfs_helper(Start , Goal , Visited ,Path):-
+    edge(Start , Next),
+    \+ member(Next , Visited ),
+    dfs_helper(Next , Goal , [Next | Visited ] , Path).
+edge(a, b).
+edge(a, c).
+edge(b, e).
+edge(c ,f).
+edge(d ,g).
+edge(e ,g).
+edge(f ,h).
+
+run: 
+?- dfs(a, g, Path).
+?- dfs(a, h, Path).
+
+?- dfs(a, h, Path).
+
+
+explain:
+
+
+Medium-length explanation (what the code does and how)
+
+Purpose: This program performs a depth-first search (DFS) on a directed graph defined by edge/2 facts. dfs(Start, Goal, Path) finds a path from Start to Goal.
+
+Representation:
+
+Nodes are atomic terms like a, b, c, ....
+
+Edges are facts edge(From, To).
+
+Algorithm flow:
+
+dfs/3 initializes the search by calling dfs_helper/4 with the visited list containing only the start node: [Start].
+
+dfs_helper(Current, Goal, Visited, Path):
+
+If Current equals Goal, the predicate succeeds and returns the current Visited list as Path (the search stops).
+
+Otherwise it selects a successor Next using edge(Current, Next), ensures Next has not been visited (\+ member(Next, Visited)), and recursively continues DFS from Next, prepending Next to the Visited list.
+
+Important detail about Path format:
+
+The returned Path is the visited nodes with the goal first and start last (i.e., the path is in reverse order: [Goal, ..., Start]).
+
+If you prefer a start-to-goal ordering, call reverse/2 on the result:
+
+?- dfs(a, g, P), reverse(P, PathFrontToGoal).
+PathFrontToGoal = [a, b, e, g].
+
+
+Backtracking & branching:
+
+DFS explores one branch fully before backtracking. For example dfs(a,g,...) explores a->b->e->g.
+
+If a branch dead-ends (no unvisited successors), Prolog backtracks to try other edge/2 choices (e.g., a->c->f->h).
+
+Limitations & notes:
+
+Graph is treated as directed (use symmetric edge/2 facts if you want undirected behavior).
+
+No cycle repeats due to Visited checks.
+
+This DFS returns the first path it finds; not necessarily shortest in number of edges.
+
+If you need all paths, remove the \+ member(Next, Visited) check or collect solutions via backtracking — but beware of infinite loops unless handled.
