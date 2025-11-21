@@ -1,0 +1,39 @@
+✅ 1. Word Count in a Text File (Map–Reduce Style)
+📌 map → splits words
+📌 reduce → counts occurrences
+
+
+
+from functools import reduce
+# Read file
+with open("input.txt", "r") as f:
+    text = f.read().lower().split()
+
+# Map step: convert words into (word, 1)
+mapped = list(map(lambda w: (w, 1), text))
+
+# Reduce step: count occurrences
+word_count = {}
+for word, count in mapped:
+    word_count[word] = word_count.get(word, 0) + count
+
+print("Word Count:")
+for w, c in word_count.items():
+    print(w, ":", c)
+
+
+📌 Make sure you have a file named input.txt in the same folder.
+
+✅ 2. Square of Each Number Using map()
+numbers = [1, 2, 3, 4, 5]
+
+squares = list(map(lambda x: x * x, numbers))
+
+print("Squares:", squares)
+
+✅ 3. Cube of Each Number Using map()
+numbers = [1, 2, 3, 4, 5]
+
+cubes = list(map(lambda x: x ** 3, numbers))
+
+print("Cubes:", cubes)
